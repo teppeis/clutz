@@ -75,6 +75,12 @@ class DeclarationGenerator {
   static final String INSTANCE_CLASS_SUFFIX = "_Instance";
 
   /**
+   * When we emit a type Foo, we also emit a type Foo_ForClosure = Foo|null.
+   * This lets other places that reference Foo to pick up the implied nullability in partial mode.
+   */
+  static final String FOR_CLOSURE_SUFFIX = "_ForClosure";
+
+  /**
    * Contains symbols that are part of platform externs, but not yet in lib.d.ts. This list is
    * incomplete and will grow as needed.
    */
@@ -1516,6 +1522,11 @@ class DeclarationGenerator {
       }
 
       visitObjectType(ftype, ftype.getPrototype(), getTemplateTypeNames(ftype));
+
+      // See comments at the definition of FOR_CLOSURE_SUFFIX.
+      // Classes/interfaces are implicitly nullable, so include |null.
+      emit("type " + name + FOR_CLOSURE_SUFFIX + " = " + name + "|null;");
+      emitBreak();
     }
 
     private void emitCommaSeparatedInterfaces(Iterator<ObjectType> it) {
@@ -1621,6 +1632,11 @@ class DeclarationGenerator {
       if (emitNeverBrand) emit("&{clutzEnumBrand: never}");
       emit(";");
       emitBreak();
+
+      // See comments at the definition of FOR_CLOSURE_SUFFIX.
+      // Type aliases are not nullable by default, so this alias is just the same as the original enum.
+      emit("type " + unqualifiedName + FOR_CLOSURE_SUFFIX + " = " + unqualifiedName + ";");
+      emitBreak();
     }
 
     private void visitEnumType(String symbolName, String qualifiedName, EnumType type) {
@@ -1689,6 +1705,11 @@ class DeclarationGenerator {
         emitNoSpace(";");
         emitBreak();
       }
+
+      // See comments at the definition of FOR_CLOSURE_SUFFIX.
+      // Enums are not nullable by default, so this alias is just the same as the original enum.
+      emit("type " + unqualifiedName + FOR_CLOSURE_SUFFIX + " = " + unqualifiedName + ";");
+      emitBreak();
     }
 
     private void visitTypeDeclaration(JSType type, boolean isVarArgs, boolean isOptionalPosition) {
