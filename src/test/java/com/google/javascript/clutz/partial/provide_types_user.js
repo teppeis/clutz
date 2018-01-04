@@ -7,6 +7,16 @@
 goog.module('partial.provide.types.user');
 const types = goog.require('partial.provide.types');
 
+
+/**
+ * @param {types.Class} p
+ * @param {?types.Class} questionP
+ * @param {!types.Class} bangP
+ * @param {types.Class|null} pOrNull
+ */
+exports.nullVariants = function(p, questionP, bangP, pOrNull) {};
+
+
 /**
  * @param {types.Class} klass
  * @param {types.Interface} iface
@@ -14,6 +24,11 @@ const types = goog.require('partial.provide.types');
  * @param {types.NonNullTypedef} nonnull
  * @param {types.NullableTypedef} nullable
  */
-function userFunction(klass, iface, en, nonnull, nullable) {
-}
-exports.userFunction = userFunction;
+exports.typeVariants = function(klass, iface, en, nonnull, nullable) {};
+
+/**
+ * @typedef {{
+ *   c: types.Class,
+ * }}
+ */
+exports.TypeDef;

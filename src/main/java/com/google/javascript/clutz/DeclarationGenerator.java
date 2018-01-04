@@ -75,6 +75,12 @@ class DeclarationGenerator {
   static final String INSTANCE_CLASS_SUFFIX = "_Instance";
 
   /**
+   * Suffix on maybe-nullable type aliases.
+   * @see TreeWalker#emitMaybeNullableTypeAlias
+   */
+  static final String FOR_CLOSURE_SUFFIX = "_ForClosure";
+
+  /**
    * Contains symbols that are part of platform externs, but not yet in lib.d.ts. This list is
    * incomplete and will grow as needed.
    */
@@ -1386,7 +1392,7 @@ class DeclarationGenerator {
      * This lets other places that reference Foo to pick up the implied nullability in partial mode.
      */
     private void emitMaybeNullableTypeAlias(String name, boolean nullable) {
-      emit("type " + name + "_ForClosure = " + name);
+      emit("type " + name + FOR_CLOSURE_SUFFIX + " = " + name);
       if (nullable) emit("| null");
       emit(";");
       emitBreak();
@@ -1765,7 +1771,11 @@ class DeclarationGenerator {
       //   export let x: F;  // F is looked up in a.b.c.d, then a.b.c, then a.b.
       // }
       // </pre>
-      emit(displayName);
+      if (opts.partialInput) {
+        emit(displayName + FOR_CLOSURE_SUFFIX);
+      } else {
+        emit(displayName);
+      }
       List<JSType> templateTypes = nType.getTemplateTypes();
       if (templateTypes != null && templateTypes.size() > 0) {
         emitGenericTypeArguments(type.getTemplateTypes().iterator());
