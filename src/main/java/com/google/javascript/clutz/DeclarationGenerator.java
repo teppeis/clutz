@@ -941,10 +941,9 @@ class DeclarationGenerator {
     // In partial mode, emit goog.provided symbols in goog.module/dollar style, since goog.module
     // code can't tell if its import came from a goog.provide or a goog.module style file
     boolean rewroteGoogProvide = false;
-    if (opts.partialInput && isDefault && emitName.contains(".")) {
+    if (opts.partialInput && isDefault && !emitName.contains("module$exports$") && !emitName.contains("module$contents$")) {
       namespace = "";
       String googModuleEmitName = "module$exports$" + emitName.replace(".", "$");
-      importRenameMap.put(emitName, googModuleEmitName);
       emitName = googModuleEmitName;
       rewroteGoogProvide = true;
     }
@@ -1802,8 +1801,16 @@ class DeclarationGenerator {
           // in displayNameParts - in this case all the prefix parts are replaced with the rename
           displayNamePrefix.clear();
           displayNamePrefix.add(importRenameMap.get(baseDisplayName));
-          displayName = Joiner.on(".").join(displayNameParts);
-          break;
+          return Joiner.on(".").join(displayNameParts);
+        }
+      }
+      if (opts.partialInput) {
+        for (TypedVar symbol : compiler.getTopScope().getAllSymbols()) {
+          if (symbol.getName().equals(displayName)) {
+            if (!displayName.contains("module$exports$") && !displayName.contains("module$contents$")) {
+              return "module$exports$" + displayName.replace(".", "$");
+            }
+          }
         }
       }
       return displayName;
