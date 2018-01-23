@@ -66,6 +66,7 @@ public class DeclarationGeneratorTests {
     List<File> testFiles = getTestInputFiles(JS_NO_EXTERNS);
     for (final File input : testFiles) {
       File golden = getGoldenFile(input, ".d.ts");
+      final String goldenText = getTestFileText(golden);
       ProgramSubject subject = assertThatProgram(input);
       if (input.getName().contains("_with_platform")) {
         subject.withPlatform = true;
@@ -80,7 +81,7 @@ public class DeclarationGeneratorTests {
         subject.partialInput = true;
       }
       subject.extraExternFile = getExternFileNameOrNull(input.getName());
-      suite.addTest(new DeclarationTest(input.getName(), golden, subject));
+      suite.addTest(new DeclarationTest(input.getName(), goldenText, subject));
     }
     return suite;
   }
@@ -139,17 +140,18 @@ public class DeclarationGeneratorTests {
         text += platformGoldenText;
       }
     }
-    return text;
+    String cleanText = GOLDEN_FILE_COMMENTS_REGEXP.matcher(text).replaceAll("");
+    return cleanText;
   }
 
   private static final class DeclarationTest implements Test, Describable {
     private final String testName;
     private final ProgramSubject subject;
-    private final File golden;
+    private final String goldenText;
 
-    private DeclarationTest(String testName, File golden, ProgramSubject subject) {
+    private DeclarationTest(String testName, String goldenText, ProgramSubject subject) {
       this.testName = testName;
-      this.golden = golden;
+      this.goldenText = goldenText;
       this.subject = subject;
     }
 
@@ -157,7 +159,7 @@ public class DeclarationGeneratorTests {
     public void run(TestResult result) {
       result.startTest(this);
       try {
-        subject.generatesDeclarations(golden);
+        subject.generatesDeclarations(goldenText);
       } catch (Throwable t) {
         result.addError(this, t);
       } finally {
