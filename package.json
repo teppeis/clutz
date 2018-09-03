@@ -1,11 +1,18 @@
 {
-  "name": "clutz",
-  "version": "0.0.0",
+  "name": "@teppeis/clutz",
+  "version": "1.0.0",
   "license": "MIT",
+  "files": [
+      "./build/install"
+  ],
+  "bin": {
+      "clutz": "./build/install/clutz/bin/clutz",
+      "gents": "./build/install/clutz/bin/gents"
+  },
   "homepage": "https://github.com/angular/clutz",
   "description": "Clutz is not on npm, and technically not a node package. \n This is needed only for testing Clutz's output against the TypeScript compiler, and to install some development dependencies from npm.",
   "devDependencies": {
     "clang-format": "^1.2.3",
-    "typescript": "^2.8.3"
+    "typescript": "^3.0.3"
   }
 }
