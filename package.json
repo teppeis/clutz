@@ -1,7 +1,7 @@
 {
   "name": "@teppeis/clutz",
   "description": "Clutz is not on npm, and technically not a node package. \n This is needed only for testing Clutz's output against the TypeScript compiler, and to install some development dependencies from npm.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "bin": {
     "clutz": "build/install/clutz/bin/clutz",
     "gents": "build/install/clutz/bin/gents"
