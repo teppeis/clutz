@@ -1,10 +1,10 @@
 declare namespace ಠ_ಠ.clutz.a.b {
-  class StaticHolder {
+  class StaticHolder__clutz_alias {
     private noStructuralTyping_a_b_StaticHolder : any;
   }
 }
 declare module 'goog:a.b.StaticHolder' {
-  import StaticHolder = ಠ_ಠ.clutz.a.b.StaticHolder;
+  import StaticHolder = ಠ_ಠ.clutz.a.b.StaticHolder__clutz_alias;
   export default StaticHolder;
 }
 declare namespace ಠ_ಠ.clutz.a.b.StaticHolder {

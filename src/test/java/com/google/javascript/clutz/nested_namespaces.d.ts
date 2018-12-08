@@ -15,12 +15,12 @@ declare module 'goog:nested.NotNestedEither' {
   export default NotNestedEither;
 }
 declare namespace ಠ_ಠ.clutz.nested {
-  class PrivateC {
+  class PrivateC__clutz_alias {
     private noStructuralTyping_nested_PrivateC : any;
   }
 }
 declare module 'goog:nested.PrivateC' {
-  import PrivateC = ಠ_ಠ.clutz.nested.PrivateC;
+  import PrivateC = ಠ_ಠ.clutz.nested.PrivateC__clutz_alias;
   export default PrivateC;
 }
 declare namespace ಠ_ಠ.clutz.nested.PrivateC {
@@ -32,7 +32,7 @@ declare module 'goog:nested.PrivateC.Enum' {
   export default Enum;
 }
 declare namespace ಠ_ಠ.clutz.nested {
-  let foo__clutz_alias : ಠ_ಠ.clutz.nested.PrivateC ;
+  let foo__clutz_alias : ಠ_ಠ.clutz.nested.PrivateC__clutz_alias ;
 }
 declare module 'goog:nested.foo' {
   import foo = ಠ_ಠ.clutz.nested.foo__clutz_alias;

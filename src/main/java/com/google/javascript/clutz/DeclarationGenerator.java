@@ -246,6 +246,12 @@ class DeclarationGenerator {
    */
   private Set<String> collidingProvides = new LinkedHashSet<>();
 
+  /**
+   * Mapping from original display names to alias names with
+   * Constants.COLLDING_PROVIDE_ALIAS_POSTFIX.
+   */
+  private Map<String, String> collidingAliasMap = new HashMap<>();
+
   DeclarationGenerator(Options opts) {
     this.opts = opts;
     this.compiler = new InitialParseRetainingCompiler();
@@ -486,8 +492,10 @@ class DeclarationGenerator {
         emitName = rewritenProvide;
         rewrittenProvides.add(rewritenProvide);
       }
-      if (needsAlias(shadowedProvides, provide, symbol)) {
+      if (needsAlias(shadowedProvides, provide, symbol, false)) {
+        String oldEmitName = emitName;
         emitName += Constants.COLLDING_PROVIDE_ALIAS_POSTFIX;
+        collidingAliasMap.put(oldEmitName, emitName);
       }
       if (symbol == null) {
         // Sometimes goog.provide statements are used as pure markers for dependency management, or
@@ -832,8 +840,10 @@ class DeclarationGenerator {
       String parentPath = getNamespace(symbol.getName());
       boolean isDefault = isDefaultExport(symbol);
       String emitName = symbol.getName();
-      if (needsAlias(shadowedSymbols, symbol.getName(), symbol)) {
+      if (needsAlias(shadowedSymbols, symbol.getName(), symbol, true)) {
+        String oldEmitName = emitName;
         emitName += Constants.COLLDING_PROVIDE_ALIAS_POSTFIX;
+        collidingAliasMap.put(oldEmitName, emitName);
       }
 
       // There is nothing to emit for a namespace, because all its symbols will be visited later,
@@ -881,7 +891,8 @@ class DeclarationGenerator {
     Collections.sort(symbols, BY_SOURCE_FILE_AND_VAR_NAME);
   }
 
-  private boolean needsAlias(Set<String> shadowedSymbols, String provide, TypedVar symbol) {
+  private boolean needsAlias(
+      Set<String> shadowedSymbols, String provide, TypedVar symbol, boolean isExtern) {
     if (collidingProvides.contains(provide)) {
       return true;
     }
@@ -901,9 +912,14 @@ class DeclarationGenerator {
     if (isPrivate(type.getJSDocInfo()) && !isConstructor(type.getJSDocInfo())) {
       return true;
     }
-    // Only var declarations have collisions, while class, interface, function, and typedef can
+    // Workaround for TS2417 errors (class static side incorrectly extends base class static side).
+    // ex) goog.ui.Container.EventType and goog.ui.Component.EventType are imcompatible.
+    if (!isExtern && type.isConstructor()) {
+      return isDefaultExport(symbol);
+    }
+    // Only var declarations have collisions, while interface, function, and typedef can
     // coexist with namespaces.
-    if (type.isInterface() || type.isConstructor() || type.isFunctionType() || isTypedef(type)) {
+    if (type.isInterface() || type.isFunctionType() || isTypedef(type)) {
       return false;
     }
     return isDefaultExport(symbol);
@@ -1458,6 +1474,9 @@ class DeclarationGenerator {
 
     private String getAbsoluteName(ObjectType objectType) {
       String name = objectType.getDisplayName();
+      if (collidingAliasMap.containsKey(name)) {
+        name = collidingAliasMap.get(name);
+      }
       // Names that do not have a namespace '.' are either platform names in the top level
       // namespace like `Object` or `Element`, or they are unqualified `goog.provide`s, e.g.
       // `goog.provide('Toplevel')`. In both cases they will be found with the naked name.
@@ -1486,7 +1505,7 @@ class DeclarationGenerator {
         // Since closure inlines all aliases before this step, check against
         // the type name.
         if (!isAliasedClassOrInterface(symbol, ftype)) {
-          visitClassOrInterface(getUnqualifiedName(symbol), ftype);
+          visitClassOrInterface(getUnqualifiedName(emitName), ftype);
         } else {
           if (KNOWN_CLASS_ALIASES.containsKey(symbol.getName())) {
             visitKnownTypeValueAlias(
