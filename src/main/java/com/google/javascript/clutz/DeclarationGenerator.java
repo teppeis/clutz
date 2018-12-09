@@ -1716,41 +1716,45 @@ class DeclarationGenerator {
      */
     private void visitTemplateTypes(
         ObjectType type, List<String> alreadyEmittedTemplateType, boolean isDeclaration) {
-      if (type.hasAnyTemplateTypes() && !type.getTemplateTypeMap().isEmpty()) {
-        List<String> realTemplateType = new ArrayList<>();
+      if (!type.hasAnyTemplateTypes() || type.getTemplateTypeMap().isEmpty()) {
+        return;
+      }
+      List<String> realTemplateType = new ArrayList<>();
 
-        for (TemplateType templateType : type.getTemplateTypeMap().getTemplateKeys()) {
-          String displayName = templateType.getDisplayName();
+      for (TemplateType templateType : type.getTemplateTypeMap().getTemplateKeys()) {
+        String displayName = templateType.getDisplayName();
 
-          // Some template variables can be already defined at the class definition.
-          // Closure and TypeScript disagree in that case, in closure redeclaring a class template
-          // variable at a method does nothing, but in Typescript it introduces a new variable.
-          // To preserve the semantics from closure we skip emitting redeclared variables.
-          if (alreadyEmittedTemplateType.contains(displayName)) {
-            continue;
-          }
-
-          if (displayName.contains("IObject#")) {
-            displayName = normalizeIObjectTemplateName(type, displayName);
-          }
-          // When we emit partial programs, we cannot differentiate whether Foo
-          // is a plain type or a generic type for which closure infers '?' as
-          // all type arguments.
-          // To support this usecase we emit ' = any' for all generic args.
-          if (opts.partialInput && isDeclaration) {
-            displayName += " = any";
-          }
-
-          if (displayName != null) {
-            realTemplateType.add(displayName);
-          }
+        // Some template variables can be already defined at the class definition.
+        // Closure and TypeScript disagree in that case, in closure redeclaring a class template
+        // variable at a method does nothing, but in Typescript it introduces a new variable.
+        // To preserve the semantics from closure we skip emitting redeclared variables.
+        if (alreadyEmittedTemplateType.contains(displayName)) {
+          continue;
         }
 
-        if (!realTemplateType.isEmpty()) {
-          emit("<");
-          emit(Joiner.on(" , ").join(realTemplateType));
-          emit(">");
+        if (displayName.contains("IObject#")) {
+          displayName = normalizeIObjectTemplateName(type, displayName);
         }
+        // When we emit partial programs, we cannot differentiate whether Foo
+        // is a plain type or a generic type for which closure infers '?' as
+        // all type arguments.
+        // To support this usecase we emit ' = any' for all generic args.
+        if (opts.partialInput && isDeclaration) {
+          displayName += " = any";
+        } else if ("goog.Promise".equals(type.getReferenceName())
+            && "RESOLVER_CONTEXT".equals(displayName)) {
+          displayName += " = void";
+        }
+
+        if (displayName != null) {
+          realTemplateType.add(displayName);
+        }
+      }
+
+      if (!realTemplateType.isEmpty()) {
+        emit("<");
+        emit(Joiner.on(" , ").join(realTemplateType));
+        emit(">");
       }
     }
 
@@ -2940,12 +2944,7 @@ class DeclarationGenerator {
 
       String templateVarName = templateTypeNames.next();
 
-      // TODO(lucassloan): goog.Promise has bad types (caused by an inconsistent number of generic
-      // type
-      // params) that are coerced to any, so explicitly emit any and fix when the callers have been
-      // fixed.
-      String classTemplatizedType =
-          className.equals("ಠ_ಠ.clutz.goog.Promise") ? " any" : className + " < RESULT >";
+      String classTemplatizedType = className + " < RESULT >";
       // The AngularJS promise type should match the TypeScript type declaration since they describe
       // the same runtime.
       if (propName.equals("then")) {
@@ -2994,16 +2993,7 @@ class DeclarationGenerator {
     private String getPromiseMethod(String propName, String className) {
       switch (propName) {
         case "resolve":
-          // TODO(lucassloan): goog.Promise has bad types that are coerced to any, so explicitly
-          // emit any
-          // and change to the proper type `(value: googPromise< T , any > | T): googPromise<T,
-          // any>`
-          // when the callers have been fixed.
-          if (className.equals("ಠ_ಠ.clutz.goog.Promise")) {
-            return "resolve < T >(value: " + className + " < T , any > | T): any;";
-          } else {
-            return "resolve < T >(value: " + className + " < T > | T): " + className + " < T >;";
-          }
+          return "resolve < T > (value: PromiseLike < T > | T ) : " + className + " < T >;";
         case "race":
           return "race < T > (values : T [] ) : " + className + " < T > ;";
           // TODO(rado): angular.d.ts has improved types for .all, replace with all overrides from
