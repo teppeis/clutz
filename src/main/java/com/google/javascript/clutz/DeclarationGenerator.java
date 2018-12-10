@@ -2963,9 +2963,7 @@ class DeclarationGenerator {
         } else {
           return "then < RESULT > (opt_onFulfilled ? : ( (a : "
               + templateVarName
-              + " ) => "
-              + classTemplatizedType
-              + " | RESULT ) | null , "
+              + " ) => PromiseLike < RESULT > | RESULT ) | null , "
               + "opt_onRejected ? : ( (a : any ) => any ) | null) : "
               + classTemplatizedType
               + " ;";
