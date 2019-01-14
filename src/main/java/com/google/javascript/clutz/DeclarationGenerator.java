@@ -699,8 +699,7 @@ class DeclarationGenerator {
         }
 
         // skip provided symbols (as default or in an namespace).
-        if (provides.contains(name)
-            || (!transitiveProvides.contains(name) && provides.contains(namespace))) {
+        if (isProvidedSymbol(provides, transitiveProvides, name)) {
           continue;
         }
 
@@ -737,6 +736,34 @@ class DeclarationGenerator {
       if (typesUsed.size() == typesUsedCount) break;
       maxTypeUsedDepth--;
     }
+  }
+
+  /** Returns true if the symbol is already provided as default or in an namespace. */
+  private boolean isProvidedSymbol(
+      Set<String> provides, Set<String> transitiveProvides, String name) {
+    if (provides.contains(name)) {
+      return true;
+    }
+    if (transitiveProvides.contains(name)) {
+      return false;
+    }
+    String namespace = getNamespace(name);
+    while (!namespace.isEmpty()) {
+      if (provides.contains(namespace)) {
+        return true;
+      }
+      final TypedVar symbol = this.compiler.getTopScope().getOwnSlot(namespace);
+      // inner classes are emitted recursively
+      if (symbol == null || !isClassLike(symbol.getType())) {
+        return false;
+      }
+      // private inner classes are not emitted
+      if (isPrivate(symbol.getJSDocInfo())) {
+        return false;
+      }
+      namespace = getNamespace(namespace);
+    }
+    return false;
   }
 
   /**
